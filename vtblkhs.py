@@ -3,7 +3,6 @@ import requests
 import json
 import time
 
-apikey = '<VT_API_KEY>'
 hashes = open("input_hash.txt") # the hashes to check
 
 with open("virustotal_hash_analysis.csv", mode="w", newline="") as analysis:
