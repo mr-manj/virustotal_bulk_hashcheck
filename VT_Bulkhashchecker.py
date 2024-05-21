@@ -1,31 +1,46 @@
+import csv
 import requests
 import json
 import time
 
-apikey = '<YOUR API KEY>'
-hashes = open("/input/file/here") # the hashes to check
-analysis = open("/output/file/here", "w") # the file to save to the result
-analysis.write("\t\t\tLink,File Name,File Type,Undetected,Detected_Suspicious,Detected_Malicious,Threat Label,Tag1,Tag2,Tag3,Tag4"
-               "\n")
-for hashn in hashes:
-        print('Checking hash ' + hashn)
-        url = "https://www.virustotal.com/api/v3/files/"
-        VTlink= "https://www.virustotal.com/gui/file/"
-        headers = {
-             "accept": "application/json",
-             "x-apikey": "<YOUR API KEY>"
-             }
-        response= requests.get(url+hashn, headers=headers, timeout= 120)
-       
-        if response.status_code == 404:
-          result = response.json()         
-          analysis.write(VTlink+hashn.strip() + ","+ "Not Found in Virus Total Database"+"\n")
+apikey = '<VT_API_KEY>'
+hashes = open("input_hash.txt") # the hashes to check
 
-        elif response.status_code == 200:
-         result = response.json()
+with open("virustotal_hash_analysis.csv", mode="w", newline="") as analysis:
+    writer = csv.writer(analysis)
+    writer.writerow(["VTlink", "Filetype", "Undetected", "Suspicious", "Malicious"])
+    analysis.close()
+
+
+for hashn in hashes:
+  
+  with open("movie_analysis.csv", mode="a", newline="") as analysis:
+    writer = csv.writer(analysis)
+
+    print('Checking hash ' + hashn)
+    url = "https://www.virustotal.com/api/v3/files/"
+    VTlink= "https://www.virustotal.com/gui/file/"
+    headers = {
+      "accept": "application/json",
+      "x-apikey": "<VT_API_KEY>"
+      }
+    
+    hashn = hashn.strip()
+    response= requests.get(url+hashn, headers=headers, timeout= 120)
+
+    if response.status_code == 404:
+      result = response.json()         
+      analysis.write(VTlink+hashn.strip() + ","+ "Not Found in Virus Total Database"+"\n")
+
+    elif response.status_code == 200:
+      result = response.json()
 # write only the files recognized as malicious
-         analysis.write((((((((VTlink+hashn.strip() + "," + str(result['data']['attributes']['names'][0])+ ",") +str(result['data']['attributes']['type_description'])+",") + str(result['data']['attributes']['last_analysis_stats']['undetected'])+",")
-                   +str(result['data']['attributes']['last_analysis_stats']['suspicious'])+",")+str(result['data']['attributes']['last_analysis_stats']['malicious'])+",")
-                   + str(result['data']['attributes']['popular_threat_classification']['suggested_threat_label'])+",")
-                   +str(result['data']['attributes']['tags'])+",")+"\n")
-        time.sleep(1 * 20)
+      writer.writerow([
+        VTlink + hashn.strip(),
+        result['data']['attributes']['magic'],
+        result['data']['attributes']['last_analysis_stats']['undetected'],
+        result['data']['attributes']['last_analysis_stats']['suspicious'],
+        result['data']['attributes']['last_analysis_stats']['malicious']
+])
+      analysis.close()
+    time.sleep(1 * 20)
